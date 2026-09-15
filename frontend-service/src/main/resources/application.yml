@@ -1,0 +1,29 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: frontend-service
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    encoding: UTF-8
+    mode: HTML
+
+# Configuration du Gateway - utilise la configuration globale
+gateway:
+  url: http://gateway-service:8080
+
+# Configuration du service d'évaluation des risques via gateway
+risk-assessment-service:
+  url: http://gateway-service:8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized

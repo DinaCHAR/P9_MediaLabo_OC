@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediLabo - Évaluations des Risques</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo h1 {
+            margin: 0;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .nav-links a:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .page-header h2 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        .page-header p {
+            color: #666;
+        }
+        .risk-table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .risk-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .risk-table th,
+        .risk-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .risk-table th {
+            background-color: #2c3e50;
+            color: white;
+            font-weight: bold;
+        }
+        .risk-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        .risk-level {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: bold;
+            text-align: center;
+            color: white;
+        }
+        .risk-none {
+            background-color: #27ae60;
+        }
+        .risk-borderline {
+            background-color: #f39c12;
+        }
+        .risk-indanger {
+            background-color: #e74c3c;
+        }
+        .risk-earlyonset {
+            background-color: #8e44ad;
+        }
+        .btn-refresh {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        .btn-refresh:hover {
+            background-color: #138496;
+        }
+        .btn-refresh:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .alert-info {
+            background-color: #cce7ff;
+            border: 1px solid #b3d9ff;
+            color: #004085;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <h1>MediLabo</h1>
+        </div>
+        <nav class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/patients">Patients</a>
+            <a href="/risk-assessments">Risques</a>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${info}" class="alert alert-info" th:text="${info}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        
+        <div class="page-header">
+            <h2>📊 Évaluations des Risques</h2>
+            <p>Analyse du niveau de risque diabétique pour tous les patients</p>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <a href="/dashboard" class="btn">← Retour au Dashboard</a>
+            <button onclick="refreshRiskAssessments()" class="btn btn-refresh" id="refreshBtn">
+                🔄 Actualiser les Évaluations
+            </button>
+        </div>
+        
+        <div class="risk-table-container">
+            <div id="loading" class="loading">
+                Chargement des évaluations de risque...
+            </div>
+            <div id="error" class="error" style="display: none;">
+                Erreur lors du chargement des données. Veuillez réessayer.
+            </div>
+            <table class="risk-table" id="riskTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Patient ID</th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Âge</th>
+                        <th>Sexe</th>
+                        <th>Risque Attendu</th>
+                    </tr>
+                </thead>
+                <tbody id="riskTableBody">
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRiskAssessments();
+        });
+        
+        async function loadRiskAssessments() {
+            try {
+                const response = await fetch('/api/risk-assessments');
+                if (!response.ok) {
+                    throw new Error('Erreur lors du chargement des données');
+                }
+                
+                const riskAssessments = await response.json();
+                displayRiskAssessments(riskAssessments);
+                
+            } catch (error) {
+                console.error('Erreur:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+        
+        async function refreshRiskAssessments() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            const originalText = refreshBtn.innerHTML;
+            
+            // Désactiver le bouton et changer le texte
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '🔄 Actualisation...';
+            
+            // Afficher le loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('riskTable').style.display = 'none';
+            
+            try {
+                await loadRiskAssessments();
+            } finally {
+                // Réactiver le bouton
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = originalText;
+            }
+        }
+        
+        function displayRiskAssessments(assessments) {
+            const tableBody = document.getElementById('riskTableBody');
+            const loading = document.getElementById('loading');
+            const table = document.getElementById('riskTable');
+            
+
+            loading.style.display = 'none';
+            
+
+            tableBody.innerHTML = '';
+            
+
+            assessments.forEach(assessment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${assessment.patientId}</td>
+                    <td>${assessment.lastName}</td>
+                    <td>${assessment.firstName}</td>
+                    <td>${assessment.age}</td>
+                    <td>${assessment.sex}</td>
+                    <td><span class="risk-level ${getRiskClass(assessment.riskLevel)}">${getRiskLabel(assessment.riskLevel)}</span></td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+
+            table.style.display = 'table';
+        }
+        
+        function getRiskClass(riskLevel) {
+            switch(riskLevel) {
+                case 'NONE': return 'risk-none';
+                case 'BORDERLINE': return 'risk-borderline';
+                case 'IN_DANGER': return 'risk-indanger';
+                case 'EARLY_ONSET': return 'risk-earlyonset';
+                default: return 'risk-none';
+            }
+        }
+        
+        function getRiskLabel(riskLevel) {
+            switch(riskLevel) {
+                case 'NONE': return "None";
+                case 'BORDERLINE': return "Borderline";
+                case 'IN_DANGER': return "In Danger";
+                case 'EARLY_ONSET': return "Early Onset";
+                default: return riskLevel;
+            }
+        }
+    </script>
+</body>
+</html>

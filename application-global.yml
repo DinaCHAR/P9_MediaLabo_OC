@@ -1,0 +1,40 @@
+# Configuration globale pour tous les services
+# Utilisation : --spring.config.additional-location=file:../application-global.yml
+
+spring:
+  profiles:
+    active: docker
+
+---
+# Configuration pour environnement Docker
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+# URLs des services en Docker
+services:
+  patient:
+    url: http://patient-service:8081
+  note:
+    url: http://note-service:8082
+  risk:
+    url: http://risk-assessment-service:8083
+  gateway:
+    url: http://gateway-service:8080
+
+# Configuration du gateway pour le frontend
+gateway:
+  url: http://gateway-service:8080
+
+# Configuration du gateway pour le frontend
+gateway:
+  url: http://gateway-service:8080
+
+logging:
+  level:
+    com.medilabo: INFO
+    feign: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

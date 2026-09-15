@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediLabo - Patient</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo h1 {
+            margin: 0;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+        .nav-links a:hover {
+            background-color: #34495e;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"], input[type="date"], select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 1rem;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-success {
+            background-color: #27ae60;
+        }
+        .btn-success:hover {
+            background-color: #229954;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <h1>MediLabo</h1>
+        </div>
+        <nav class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/patients">Patients</a>
+            <a href="/login">Déconnexion</a>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <h2 th:text="${patient.id != null ? 'Modifier Patient' : 'Nouveau Patient'}">Patient</h2>
+        
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        
+        <div class="form-container">
+            <form th:action="@{/patients}" th:object="${patient}" method="post">
+                <input type="hidden" th:field="*{id}">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">Prénom *</label>
+                        <input type="text" th:field="*{firstName}" id="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Nom *</label>
+                        <input type="text" th:field="*{lastName}" id="lastName" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dateOfBirth">Date de Naissance *</label>
+                        <input type="date" th:field="*{dateOfBirth}" id="dateOfBirth" required 
+                               min="1900-01-01" max="2024-12-31">
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Sexe *</label>
+                        <select th:field="*{gender}" id="gender" required>
+                            <option value="">Sélectionner...</option>
+                            <option value="M">Masculin</option>
+                            <option value="F">Féminin</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="address">Adresse</label>
+                    <input type="text" th:field="*{address}" id="address">
+                </div>
+                
+                <div class="form-group">
+                    <label for="phoneNumber">Numéro de Téléphone</label>
+                    <input type="text" th:field="*{phoneNumber}" id="phoneNumber">
+                </div>
+                
+                <div style="margin-top: 2rem;">
+                    <button type="submit" class="btn btn-success">
+                        <span th:text="${patient.id != null ? 'Modifier' : 'Créer'}">Créer</span>
+                    </button>
+                    <a href="/patients" class="btn btn-secondary">Annuler</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        
+        document.getElementById('dateOfBirth').addEventListener('change', function() {
+            const dateInput = this.value;
+            if (dateInput) {
+                const selectedDate = new Date(dateInput);
+                const currentDate = new Date();
+                const minDate = new Date('1900-01-01');
+                
+                if (selectedDate > currentDate) {
+                    alert('La date de naissance ne peut pas être dans le futur.');
+                    this.value = '';
+                } else if (selectedDate < minDate) {
+                    alert('Veuillez saisir une date de naissance valide (après 1900).');
+                    this.value = '';
+                }
+            }
+        });
+        
+
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const dateOfBirth = document.getElementById('dateOfBirth').value;
+            if (!dateOfBirth) {
+                e.preventDefault();
+                alert('Veuillez saisir une date de naissance.');
+                return false;
+            }
+            
+            const selectedDate = new Date(dateOfBirth);
+            const currentDate = new Date();
+            const minDate = new Date('1900-01-01');
+            
+            if (selectedDate > currentDate || selectedDate < minDate) {
+                e.preventDefault();
+                alert('Veuillez saisir une date de naissance valide.');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

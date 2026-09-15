@@ -1,0 +1,105 @@
+services:
+  mysql-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: medilabo_patients
+      MYSQL_USER: medilabo_user
+      MYSQL_PASSWORD: medilabo_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./scripts/mysql-init.sql:/docker-entrypoint-initdb.d/01-mysql-init.sql
+      - ./scripts/insert_patients.sql:/docker-entrypoint-initdb.d/02-insert_patients.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  mongodb:
+    image: mongo:6.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: adminpassword
+      MONGO_INITDB_DATABASE: medilabo_notes
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
+      - ./scripts/insert_notes_utf8.js:/docker-entrypoint-initdb.d/insert_notes_utf8.js
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 2s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  gateway-service:
+    build: ./gateway-service
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+
+  patient-service:
+    build: ./patient-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/medilabo_patients
+      - SPRING_DATASOURCE_USERNAME=medilabo_user
+      - SPRING_DATASOURCE_PASSWORD=medilabo_password
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  note-service:
+    build: ./note-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:adminpassword@mongodb:27017/medilabo_notes?authSource=admin
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  risk-assessment-service:
+    build: ./risk-assessment-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SERVICES_PATIENT_URL=http://patient-service:8081
+      - SERVICES_NOTE_URL=http://note-service:8082
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      patient-service:
+        condition: service_started
+      note-service:
+        condition: service_started
+    restart: unless-stopped
+
+  frontend-service:
+    build: ./frontend-service
+    ports:
+      - "8084:8084"
+    environment:
+      - GATEWAY_SERVICE_URL=http://gateway-service:8080
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      gateway-service:
+        condition: service_started
+    restart: unless-stopped

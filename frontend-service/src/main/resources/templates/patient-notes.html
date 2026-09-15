@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediLabo - Notes Médicales</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo h1 {
+            margin: 0;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+        .nav-links a:hover {
+            background-color: #34495e;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .patient-header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .patient-info h2 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        .patient-meta {
+            color: #666;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 1rem;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-success {
+            background-color: #27ae60;
+        }
+        .btn-success:hover {
+            background-color: #229954;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        .btn-info {
+            background-color: #17a2b8;
+        }
+        .btn-info:hover {
+            background-color: #138496;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+        }
+        .notes-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .section-header {
+            background-color: #3498db;
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: bold;
+        }
+        .notes-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .note-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        .note-item:last-child {
+            border-bottom: none;
+        }
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .note-meta {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .note-content {
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        .note-keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .keyword {
+            background-color: #e8f4f8;
+            color: #2c3e50;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        .add-note-form {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <h1>MediLabo</h1>
+        </div>
+        <nav class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/patients">Patients</a>
+            <a href="/login">Déconnexion</a>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        
+        <div th:if="${patient}" class="patient-header">
+            <div class="patient-info">
+                <h2 th:text="'Notes Médicales - ' + ${patient.firstName + ' ' + patient.lastName}">Notes Patient</h2>
+                <div class="patient-meta">
+                    <span th:text="'ID: ' + ${patient.id}">ID</span> | 
+                    <span th:text="'Né(e) le ' + ${#temporals.format(patient.dateOfBirth, 'dd/MM/yyyy')}">Date</span>
+                </div>
+            </div>
+            <div>
+                <a th:href="@{/patients/{id}(id=${patient.id})}" class="btn btn-secondary">Retour au Patient</a>
+                <a href="/risk-assessments" class="btn btn-info">📊 Voir Évaluations des Risques</a>
+            </div>
+        </div>
+        
+        <div class="content-grid">
+            <div class="notes-section">
+                <div class="section-header">
+                    📝 Notes Médicales (<span th:text="${notes != null ? #lists.size(notes) : 0}">0</span>)
+                </div>
+                <div class="notes-list">
+                    <div th:if="${notes == null or #lists.isEmpty(notes)}" class="empty-state">
+                        <i>📄</i>
+                        <p>Aucune note médicale enregistrée pour ce patient.</p>
+                        <p>Utilisez le formulaire ci-contre pour ajouter la première note.</p>
+                    </div>
+                    
+                    <div th:each="note : ${notes}" class="note-item">
+                        <div class="note-header">
+                            <span class="note-meta" th:text="${#temporals.format(note.createdDate, 'dd/MM/yyyy HH:mm')}">Date</span>
+                        </div>
+                        <div class="note-content" th:text="${note.noteContent}">Contenu de la note</div>
+                        <div th:if="${note.keywords != null and !#lists.isEmpty(note.keywords)}" class="note-keywords">
+                            <span th:each="keyword : ${note.keywords}" class="keyword" th:text="${keyword}">Mot-clé</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="add-note-form">
+                <h3 style="margin-bottom: 1.5rem; color: #2c3e50;">➕ Ajouter une Note</h3>
+                
+                <form th:action="@{/patients/{id}/notes(id=${patient.id})}" method="post">
+                    <div class="form-group">
+                        <label for="noteContent">Contenu de la Note *</label>
+                        <textarea id="noteContent" name="noteContent" required 
+                                placeholder="Saisir les observations médicales, symptômes, diagnostic, traitement...">
+                        </textarea>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label style="display: flex; align-items: center; font-size: 0.9rem; color: #555;">
+                            <input type="checkbox" name="redirectToRisk" value="true" style="margin-right: 0.5rem;">
+                            Aller directement à l'évaluation des risques après l'ajout
+                        </label>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <button type="submit" class="btn btn-success">Enregistrer la Note</button>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; padding: 1rem; background-color: #e8f4fd; border-radius: 4px; border-left: 4px solid #17a2b8;">
+                        <p style="margin: 0; color: #0c5460; font-size: 0.9rem;">
+                            💡 <strong>Conseil :</strong> Après avoir ajouté une note, pensez à vérifier l'<a href="/risk-assessments" style="color: #0c5460; text-decoration: underline;">évaluation des risques</a> mise à jour pour ce patient.
+                        </p>
+                    </div>
+                </form>
+                
+                <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                    <h4 style="color: #2c3e50; margin-bottom: 1rem;">💡 Conseils</h4>
+                    <ul style="color: #666; font-size: 0.9rem; line-height: 1.5;">
+                        <li>Soyez précis dans vos observations</li>
+                        <li>Mentionnez les symptômes importants</li>
+                        <li>Incluez les mots-clés de risque si nécessaire</li>
+                        <li>Datez et signez vos notes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
